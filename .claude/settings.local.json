@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/wangchao/.claude/plugins/task-tracker/scripts/hook-up.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/wangchao/.claude/plugins/task-tracker/scripts/hook-stop.py"
+          }
+        ]
+      }
+    ]
+  }
+}

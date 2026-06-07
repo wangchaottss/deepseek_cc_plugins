@@ -1,0 +1,8 @@
+{
+  "name": "task-tracker",
+  "version": "1.0.0",
+  "description": "Ensures Claude Code tasks run to completion by tracking session state and blocking premature stops. Designed for models that unexpectedly interrupt after thinking (e.g. deepseek-v4-pro). Hooks are configured in settings.json for reliability.",
+  "author": {
+    "name": "wangchao"
+  }
+}

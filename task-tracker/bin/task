@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# task  –  Claude Code task-record manager (bash wrapper)
+#
+# Delegates to the Python backend.  Symlink this script into a directory on
+# PATH so that ``task init|status|finish`` is available globally.
+# ---------------------------------------------------------------------------
+set -euo pipefail
+
+# Resolve symlinks so we always find the real plugin directory
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+while [ -L "$SCRIPT_PATH" ]; do
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+    SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+    case "$SCRIPT_PATH" in
+        /*) ;;
+        *) SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_PATH" ;;
+    esac
+done
+
+BIN_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+PLUGIN_ROOT="$(dirname "$BIN_DIR")"       # ~/.claude/plugins/task-tracker
+PY_SCRIPT="$PLUGIN_ROOT/scripts/task.py"
+
+exec python3 "$PY_SCRIPT" "$@"
