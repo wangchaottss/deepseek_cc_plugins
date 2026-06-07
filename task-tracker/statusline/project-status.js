@@ -44,7 +44,14 @@ stdin.on('end', () => {
   const effectiveUsage = currentInput + currentCacheCreate + currentCacheRead;
 
   const totalInput = ctx.total_input_tokens ?? 0;
+  const totalOutput = ctx.total_output_tokens ?? 0;
   const windowSize = ctx.context_window_size ?? 200000;
+
+  // DeepSeek V4-Pro pricing (CNY / 1M tokens, since 2026-05-31)
+  //   input  (cache miss): ¥3    input  (cache hit): ¥0.025   output: ¥6
+  const PRICE_INPUT = 3 / 1_000_000;
+  const PRICE_OUTPUT = 6 / 1_000_000;
+  const costCNY = totalInput * PRICE_INPUT + totalOutput * PRICE_OUTPUT;
 
   // --- progress bar ---------------------------------------------------------
 
@@ -108,6 +115,9 @@ stdin.on('end', () => {
 
   // Context usage: [████░░░░] 42% 85K/200K
   parts.push(bar + ' ' + pctDisplay + ' ' + dim + usedStr + '/' + maxStr + reset);
+
+  // Cost: CNY: 1.70
+  parts.push(yellow + 'CNY: ' + costCNY.toFixed(2) + reset);
 
   // Model
   parts.push(cyan + model + reset);
