@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/wangchao/.claude/plugins/task-tracker/scripts/hook-up.py"
+            "command": "python3 /Users/wangchao/TestAICoding/20260607/ds_cc_p/task-tracker/scripts/hook-up.py"
           }
         ]
       }
@@ -17,10 +17,14 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /Users/wangchao/.claude/plugins/task-tracker/scripts/hook-stop.py"
+            "command": "python3 /Users/wangchao/TestAICoding/20260607/ds_cc_p/task-tracker/scripts/hook-stop.py"
           }
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node /Users/wangchao/TestAICoding/20260607/ds_cc_p/task-tracker/statusline/project-status.js"
   }
 }

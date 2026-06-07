@@ -20,6 +20,7 @@ red()   { printf '\033[31m%s\033[0m' "$1"; }
 
 HOOK_UP_CMD="python3 ${PLUGIN_DIR}/scripts/hook-up.py"
 HOOK_STOP_CMD="python3 ${PLUGIN_DIR}/scripts/hook-stop.py"
+STATUSLINE_CMD="node ${PLUGIN_DIR}/statusline/project-status.js"
 
 # ============================================================================
 # install
@@ -39,6 +40,7 @@ do_install() {
     chmod +x "$PLUGIN_DIR/scripts/task.py"
     chmod +x "$PLUGIN_DIR/scripts/hook-up.py"
     chmod +x "$PLUGIN_DIR/scripts/hook-stop.py"
+    chmod +x "$PLUGIN_DIR/statusline/project-status.js"
     echo "  $(green "Done.")"
 
     # ---- 2. Symlink task to user bin --------------------------------------
@@ -51,7 +53,12 @@ do_install() {
     echo "→ Registering hooks in .claude/settings.local.json …"
     _add_hooks
 
-    # ---- 4. Create task-records root --------------------------------------
+    # ---- 4. Add statusline to project settings.local.json -----------------
+    echo ""
+    echo "→ Registering statusline in .claude/settings.local.json …"
+    _add_statusline
+
+    # ---- 5. Create task-records root --------------------------------------
     mkdir -p "$TASK_RECORDS_DIR"
     echo "  $(green "✓")  Task records directory: ~/.claude/task_records/"
 
@@ -81,12 +88,17 @@ do_uninstall() {
     echo "→ Removing hooks from .claude/settings.local.json …"
     _remove_hooks
 
-    # ---- 2. Remove task symlink -------------------------------------------
+    # ---- 2. Remove statusline from settings.local.json --------------------
+    echo ""
+    echo "→ Removing statusline from .claude/settings.local.json …"
+    _remove_statusline
+
+    # ---- 3. Remove task symlink -------------------------------------------
     echo ""
     echo "→ Removing 'task' symlink …"
     _remove_symlink
 
-    # ---- 3. Ask about task_records/ ---------------------------------------
+    # ---- 4. Ask about task_records/ ---------------------------------------
     echo ""
     _cleanup_records
 
@@ -171,15 +183,15 @@ hooks = s.setdefault('hooks', {})
 
 # --- UserPromptSubmit ---
 ups = hooks.setdefault('UserPromptSubmit', [])
+# Remove ALL old task-tracker entries (any path), then add fresh one
+ups[:] = [e for e in ups if 'task-tracker' not in e.get('hooks', [{}])[0].get('command', '')]
 ups_entry = {'matcher': '*', 'hooks': [{'type': 'command', 'command': up_cmd}]}
-# Deduplicate: remove any previous entry pointing to the same command
-ups[:] = [e for e in ups if e.get('hooks', [{}])[0].get('command') != up_cmd]
 ups.append(ups_entry)
 
 # --- Stop ---
 stops = hooks.setdefault('Stop', [])
+stops[:] = [e for e in stops if 'task-tracker' not in e.get('hooks', [{}])[0].get('command', '')]
 stop_entry = {'matcher': '*', 'hooks': [{'type': 'command', 'command': stop_cmd}]}
-stops[:] = [e for e in stops if e.get('hooks', [{}])[0].get('command') != stop_cmd]
 stops.append(stop_entry)
 
 with open(sf, 'w') as f:
@@ -214,7 +226,7 @@ removed = 0
 for key in ['UserPromptSubmit', 'Stop']:
     if key in hooks:
         before = len(hooks[key])
-        hooks[key] = [e for e in hooks[key] if e.get('hooks', [{}])[0].get('command') not in (up_cmd, stop_cmd)]
+        hooks[key] = [e for e in hooks[key] if 'task-tracker' not in e.get('hooks', [{}])[0].get('command', '')]
         after = len(hooks[key])
         removed += (before - after)
         if not hooks[key]:
@@ -228,6 +240,56 @@ with open(sf, 'w') as f:
     json.dump(s, f, indent=2, ensure_ascii=False)
 
 print(f'  \033[32m✓\033[0m  Removed {removed} hook(s) from {sf}')
+" 2>&1 || echo "  $(red "✗")  Failed to update settings.local.json"
+}
+
+# ============================================================================
+# helpers – statusline (settings.local.json)
+# ============================================================================
+_add_statusline() {
+    python3 -c "
+import json, os, sys
+
+sf = '${SETTINGS_FILE}'
+sl_cmd = '${STATUSLINE_CMD}'
+
+if os.path.exists(sf):
+    with open(sf) as f:
+        s = json.load(f)
+else:
+    s = {}
+    os.makedirs(os.path.dirname(sf), exist_ok=True)
+
+s['statusLine'] = {'type': 'command', 'command': sl_cmd}
+
+with open(sf, 'w') as f:
+    json.dump(s, f, indent=2, ensure_ascii=False)
+
+print(f'  \033[32m✓\033[0m  statusLine written to {sf}')
+" 2>&1 || echo "  $(red "✗")  Failed to update settings.local.json"
+}
+
+_remove_statusline() {
+    if [ ! -f "$SETTINGS_FILE" ]; then
+        echo "  $(yellow "⚠")  No .claude/settings.local.json found."
+        return
+    fi
+
+    python3 -c "
+import json, os, sys
+
+sf = '${SETTINGS_FILE}'
+
+with open(sf) as f:
+    s = json.load(f)
+
+if 'statusLine' in s:
+    del s['statusLine']
+    with open(sf, 'w') as f:
+        json.dump(s, f, indent=2, ensure_ascii=False)
+    print(f'  \033[32m✓\033[0m  statusLine removed from {sf}')
+else:
+    print('  (no statusLine to remove)')
 " 2>&1 || echo "  $(red "✗")  Failed to update settings.local.json"
 }
 
