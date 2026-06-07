@@ -25,8 +25,8 @@ TASK_RECORDS_DIR = os.path.expanduser("~/.claude/task_records")
 def get_project_namespace(cwd=None):
     """Convert an absolute project path to a filesystem-safe namespace.
 
-    /Users/wangchao/TestAICoding/20260607/ds_cc_p
-    -> -Users-wangchao-TestAICoding-20260607-ds_cc_p
+    /home/user/my-project
+    -> -home-user-my-project
     """
     if cwd is None:
         cwd = os.getcwd()
