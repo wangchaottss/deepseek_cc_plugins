@@ -85,8 +85,11 @@ stdin.on('end', () => {
   const maxStr = fmtTokens(windowSize);
 
   // --- model ----------------------------------------------------------------
-
-  const model = input.model || '?';
+  // model may be a string or an object like { name: "...", display_name: "..." }
+  let model = input.model || '?';
+  if (typeof model === 'object' && model !== null) {
+    model = model.name || model.id || model.display_name || '?';
+  }
 
   // --- cwd ------------------------------------------------------------------
 
